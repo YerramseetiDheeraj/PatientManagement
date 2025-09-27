@@ -54,7 +54,7 @@ namespace PatientManagement.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> EditPatientAllDetailsById([FromRoute]int id, [FromBody]Patient patient)
         {
-            await _patientRepository.EditPatientAllDetailsByIdAsync(id,patient);
+            await _patientRepository.UpdatePatientByIdAsync(id,patient);
             return Ok();
         }
     }

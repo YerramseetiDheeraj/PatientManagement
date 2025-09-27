@@ -69,7 +69,7 @@ namespace PatientManagement.Repository
             return $" Error Occured Patient With Id {id} Details not changed";
         }
 
-        public async Task<string> EditPatientAllDetailsByIdAsync(int id, Patient patient)
+        public async Task<string> UpdatePatientByIdAsync(int id, Patient patient)
         {
             var existingPatient = await _context.Patients.FindAsync(id);
 

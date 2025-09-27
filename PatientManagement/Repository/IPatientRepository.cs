@@ -15,6 +15,6 @@ namespace PatientManagement.Repository
 
         Task<string> EditPatientByIdPatchAsync(int id, JsonPatchDocument<Patient> patientModel);
 
-        Task<string> EditPatientAllDetailsByIdAsync(int id, Patient patient);
+        Task<string> UpdatePatientByIdAsync(int id, Patient patient);
     }
 }
