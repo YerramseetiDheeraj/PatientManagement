@@ -15,21 +15,31 @@ namespace PatientManagement.Repository
             _context = context;
         }
 
-        public async Task<string> AddPatientAsync(Patient patient)
+        public async Task<int> AddPatientAsync(Patient patient)
         {
             if (patient == null)
-                throw new ArgumentNullException(nameof(patient), "Employee cannot be null");
+                throw new ArgumentNullException("Employee cannot be null");
 
-            bool exists = await _context.Patients.AnyAsync(e => e.Email == patient.Email);
-            if (exists)
+            if (await _context.Patients.AnyAsync(e => e.Email == patient.Email))
                 throw new InvalidOperationException("Patient with this email already exists");
 
-            patient.CreateDate = DateOnly.FromDateTime(DateTime.Now);
-            patient.UpdatedDate = DateOnly.FromDateTime(DateTime.Now);
+            var today = DateOnly.FromDateTime(DateTime.Now);
+
+            if (patient.DateOfBirth < today.AddYears(-150) || patient.DateOfBirth > today)
+                throw new InvalidOperationException("Invalid Date of Birth. Age must be between 0 and 150 years.");
+
+            if (patient.Height <=0 || patient.Height>10)
+                throw new InvalidOperationException("Invalid height. Height must be in ft.inch(5.7) format");
+
+            if(patient.Weight<=0 || patient.Weight>300)
+                throw new InvalidOperationException("Invalid Weight. Weight must be in Kg.gm(65.90) format");
+
+            patient.CreateDate = today;
+            patient.UpdatedDate = today;
 
             _context.Patients.Add(patient);
             await _context.SaveChangesAsync();
-            return $"Patient added Succesfully";
+            return patient.Id;
         }
 
         public async Task<List<Patient>> GetAllPatientsAsync()
@@ -39,44 +49,76 @@ namespace PatientManagement.Repository
 
         public async Task<Patient> GetPatientByIdAsync(int id)
         {
-            return await _context.Patients.FindAsync(id);
+            var patient = await _context.Patients.FindAsync(id);
+
+            if (id <= 0)
+                throw new ArgumentOutOfRangeException("id should be greater than zero");
+
+            if (patient == null)
+                throw new KeyNotFoundException($"Patient with Id {id} does not exist.");
+
+            return patient;
         }
 
-        public async Task<string> DeletePatientByIdAsync(int id)
+        public async Task DeletePatientByIdAsync(int id)
         {
-            var patients = await _context.Patients.FindAsync(id);
+            var patient = await _context.Patients.FindAsync(id);
 
-            if (patients != null)
-            {
-                 _context.Patients.Remove(patients);
-                await _context.SaveChangesAsync();
-                return $"Employee With Id{id} Deleted Succesfully";
-            }
+            if (id <= 0)
+                throw new ArgumentOutOfRangeException("id should be greater than zero");
 
-            return $"Error Occured Employee With Id{id} Not Deleted ";
+            if (patient == null)
+                throw new KeyNotFoundException($"Patient with Id {id} does not exist.");
+
+            _context.Patients.Remove(patient);
+            await _context.SaveChangesAsync();
         }
 
-        public async Task<string> EditPatientByIdPatchAsync(int id, JsonPatchDocument<Patient> patientModel)
+        public async Task EditPatientByIdPatchAsync(int id, JsonPatchDocument<Patient> patientModel)
         {
-            var patients = await _context.Patients.FindAsync(id);
-            if (patients != null)
-            {
-                patientModel.ApplyTo(patients);
-                await _context.SaveChangesAsync();
-                return $"Patient With Id {id} Details Changed Succesfully";
-            }
+            var patient = await _context.Patients.FindAsync(id);
 
-            return $" Error Occured Patient With Id {id} Details not changed";
+            if (id <= 0)
+                throw new ArgumentOutOfRangeException("id should be greater than zero");
+
+            if (patient == null)
+                throw new KeyNotFoundException($"Patient with Id {id} does not exist.");
+
+            var today = DateOnly.FromDateTime(DateTime.Now);
+
+            if (patient.DateOfBirth < today.AddYears(-150) || patient.DateOfBirth > today)
+                throw new InvalidOperationException("Invalid Date of Birth. Age must be between 0 and 150 years.");
+
+            if (patient.Height <= 0 || patient.Height > 10)
+                throw new InvalidOperationException("Invalid height. Height must be in ft.inch(5.7) format");
+
+            if (patient.Weight <= 0 || patient.Weight > 300)
+                throw new InvalidOperationException("Invalid Weight. Weight must be in Kg.gm(65.90) format");
+
+            patientModel.ApplyTo(patient);
+            await _context.SaveChangesAsync();
         }
 
-        public async Task<string> UpdatePatientByIdAsync(int id, Patient patient)
+        public async Task UpdatePatientByIdAsync(int id, Patient patient)
         {
             var existingPatient = await _context.Patients.FindAsync(id);
 
-            if(existingPatient == null)
-            {
-                return $"Patiend with Id {id} Does Not Exist";
-            }
+            if (id <= 0)
+                throw new ArgumentOutOfRangeException("id should be greater than zero");
+
+            if (patient == null)
+                throw new KeyNotFoundException($"Patient with Id {id} does not exist.");
+
+            var today = DateOnly.FromDateTime(DateTime.Now);
+
+            if (patient.DateOfBirth < today.AddYears(-150) || patient.DateOfBirth > today)
+                throw new InvalidOperationException("Invalid Date of Birth. Age must be between 0 and 150 years.");
+
+            if (patient.Height <= 0 || patient.Height > 10)
+                throw new InvalidOperationException("Invalid height. Height must be in ft.inch(5.7) format");
+
+            if (patient.Weight <= 0 || patient.Weight > 300)
+                throw new InvalidOperationException("Invalid Weight. Weight must be in Kg.gm(65.90) format");
 
             patient.CreateDate = existingPatient.CreateDate;
             patient.UpdatedDate = DateOnly.FromDateTime(DateTime.Now);
@@ -85,7 +127,6 @@ namespace PatientManagement.Repository
             _context.Entry(existingPatient).CurrentValues.SetValues(patient);
 
             await _context.SaveChangesAsync();
-            return $"Patient With Id {id} Details Changed Succesfully";
         }
     }
 }
