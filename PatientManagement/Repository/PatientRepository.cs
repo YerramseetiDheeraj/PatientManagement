@@ -106,7 +106,7 @@ namespace PatientManagement.Repository
             if (id <= 0)
                 throw new ArgumentOutOfRangeException("id should be greater than zero");
 
-            if (patient == null)
+            if (existingPatient == null)
                 throw new KeyNotFoundException($"Patient with Id {id} does not exist.");
 
             var today = DateOnly.FromDateTime(DateTime.Now);
