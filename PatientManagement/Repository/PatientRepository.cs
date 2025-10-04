@@ -1,8 +1,7 @@
-﻿using PatientManagement.Models;
-using Microsoft.AspNetCore.JsonPatch;
+﻿using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.EntityFrameworkCore;
 using PatientManagement.Data;
-using System.Net;
+using PatientManagement.Models;
 
 namespace PatientManagement.Repository
 {
@@ -28,10 +27,10 @@ namespace PatientManagement.Repository
             if (patient.DateOfBirth < today.AddYears(-150) || patient.DateOfBirth > today)
                 throw new InvalidOperationException("Invalid Date of Birth. Age must be between 0 and 150 years.");
 
-            if (patient.Height <=0 || patient.Height>10)
+            if (patient.Height <= 0 || patient.Height > 10)
                 throw new InvalidOperationException("Invalid height. Height must be in ft.inch(5.7) format");
 
-            if(patient.Weight<=0 || patient.Weight>300)
+            if (patient.Weight <= 0 || patient.Weight > 300)
                 throw new InvalidOperationException("Invalid Weight. Weight must be in Kg.gm(65.90) format");
 
             patient.CreateDate = today;
@@ -125,7 +124,6 @@ namespace PatientManagement.Repository
             patient.Id = id;
 
             _context.Entry(existingPatient).CurrentValues.SetValues(patient);
-
             await _context.SaveChangesAsync();
         }
     }

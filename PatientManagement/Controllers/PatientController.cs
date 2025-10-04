@@ -1,6 +1,6 @@
-﻿using PatientManagement.Models;
-using Microsoft.AspNetCore.JsonPatch;
+﻿using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using PatientManagement.Models;
 using PatientManagement.Repository;
 
 namespace PatientManagement.Controllers
@@ -30,7 +30,7 @@ namespace PatientManagement.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(ex.Message); 
+                return BadRequest(ex.Message);
             }
         }
 
@@ -51,11 +51,11 @@ namespace PatientManagement.Controllers
             }
             catch (ArgumentOutOfRangeException ex)
             {
-                return BadRequest(ex.Message); 
+                return BadRequest(ex.Message);
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(ex.Message); 
+                return NotFound(ex.Message);
             }
         }
 
@@ -69,11 +69,11 @@ namespace PatientManagement.Controllers
             }
             catch (ArgumentOutOfRangeException ex)
             {
-                return BadRequest(ex.Message); 
+                return BadRequest(ex.Message);
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(ex.Message); 
+                return NotFound(ex.Message);
             }
         }
 
@@ -87,15 +87,15 @@ namespace PatientManagement.Controllers
             }
             catch (ArgumentOutOfRangeException ex)
             {
-                return BadRequest(ex.Message); 
+                return BadRequest(ex.Message);
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(ex.Message); 
+                return NotFound(ex.Message);
             }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(ex.Message); 
+                return BadRequest(ex.Message);
             }
         }
 
@@ -109,15 +109,15 @@ namespace PatientManagement.Controllers
             }
             catch (ArgumentOutOfRangeException ex)
             {
-                return BadRequest(ex.Message); 
+                return BadRequest(ex.Message);
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(ex.Message); 
+                return NotFound(ex.Message);
             }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(ex.Message); 
+                return BadRequest(ex.Message);
             }
         }
     }

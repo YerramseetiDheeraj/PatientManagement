@@ -35,7 +35,7 @@ namespace PatientManagement.Models
         public decimal Weight { get; set; }
 
         [Required(ErrorMessage = "Height is required")]
-        [Column(TypeName = "decimal(4,2)")] 
+        [Column(TypeName = "decimal(4,2)")]
         [Display(Name = "Height in ft")]
         public decimal Height { get; set; }
 

@@ -1,5 +1,5 @@
-﻿using PatientManagement.Models;
-using Microsoft.AspNetCore.JsonPatch;
+﻿using Microsoft.AspNetCore.JsonPatch;
+using PatientManagement.Models;
 
 namespace PatientManagement.Repository
 {
