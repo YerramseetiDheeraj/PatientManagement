@@ -17,16 +17,17 @@ namespace PatientManagement.Controllers
         }
 
         [HttpPost("")]
-        public async Task<IActionResult> AddPatient(Patient patient)
+        public async Task<IActionResult> AddPatientAsync(Patient patient)
         {
+            if (patient == null)
+            {
+                return BadRequest("Patient cannot be null");
+            }
+
             try
             {
                 var id = await _patientRepository.AddPatientAsync(patient);
                 return Ok("Patient added successfully");
-            }
-            catch (ArgumentNullException ex)
-            {
-                return BadRequest(ex.Message);
             }
             catch (InvalidOperationException ex)
             {
@@ -35,23 +36,30 @@ namespace PatientManagement.Controllers
         }
 
         [HttpGet("")]
-        public async Task<IActionResult> GetAllPatients()
+        public async Task<IActionResult> GetAllPatientsAsync()
         {
             var patients = await _patientRepository.GetAllPatientsAsync();
+
+            if(patients == null)
+            {
+                return NotFound();
+            }
+
             return Ok(patients);
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetPatientById([FromRoute] int id)
+        public async Task<IActionResult> GetPatientByIdAsync([FromRoute] int id)
         {
+            if (id <= 0)
+            {
+                return BadRequest("Id should be greater than zero");
+            }
+
             try
             {
                 var patient = await _patientRepository.GetPatientByIdAsync(id);
                 return Ok(patient);
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                return BadRequest(ex.Message);
             }
             catch (KeyNotFoundException ex)
             {
@@ -60,16 +68,17 @@ namespace PatientManagement.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeletePatientById([FromRoute] int id)
+        public async Task<IActionResult> DeletePatientByIdAsync([FromRoute] int id)
         {
+            if (id <= 0)
+            {
+                return BadRequest("Id should be greater than zero");
+            }
+
             try
             {
                 await _patientRepository.DeletePatientByIdAsync(id);
                 return Ok($"Patient with Id {id} deleted successfully.");
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                return BadRequest(ex.Message);
             }
             catch (KeyNotFoundException ex)
             {
@@ -78,16 +87,23 @@ namespace PatientManagement.Controllers
         }
 
         [HttpPatch("{id}")]
-        public async Task<IActionResult> EditPatientById([FromBody] JsonPatchDocument<Patient> patientModel, [FromRoute] int id)
+        public async Task<IActionResult> EditPatientByIdAsync([FromBody] JsonPatchDocument<Patient> patientModel, [FromRoute] int id)
         {
+
+            if (id <= 0)
+            {
+                return BadRequest("Id should be greater than zero");
+            }
+
+            if(patientModel == null)
+            {
+                return BadRequest("Patient cannot be null");
+            }
+
             try
             {
                 await _patientRepository.EditPatientByIdPatchAsync(id, patientModel);
                 return Ok($"Patient with Id {id} edited successfully.");
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                return BadRequest(ex.Message);
             }
             catch (KeyNotFoundException ex)
             {
@@ -100,16 +116,23 @@ namespace PatientManagement.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdatePatientAllDetailsById([FromRoute] int id, [FromBody] Patient patient)
+        public async Task<IActionResult> UpdatePatientAllDetailsByIdAsync([FromRoute] int id, [FromBody] Patient patient)
         {
+
+            if (id <= 0)
+            {
+                return BadRequest("Id should be greater than zero");
+            }
+
+            if (patient == null)
+            {
+                return BadRequest("Patient cannot be null");
+            }
+
             try
             {
                 await _patientRepository.UpdatePatientByIdAsync(id, patient);
                 return Ok($"Patient with Id {id} updated successfully.");
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                return BadRequest(ex.Message);
             }
             catch (KeyNotFoundException ex)
             {

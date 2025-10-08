@@ -16,9 +16,6 @@ namespace PatientManagement.Repository
 
         public async Task<int> AddPatientAsync(Patient patient)
         {
-            if (patient == null)
-                throw new ArgumentNullException("Employee cannot be null");
-
             if (await _context.Patients.AnyAsync(e => e.Email == patient.Email))
                 throw new InvalidOperationException("Patient with this email already exists");
 
@@ -50,9 +47,6 @@ namespace PatientManagement.Repository
         {
             var patient = await _context.Patients.FindAsync(id);
 
-            if (id <= 0)
-                throw new ArgumentOutOfRangeException("id should be greater than zero");
-
             if (patient == null)
                 throw new KeyNotFoundException($"Patient with Id {id} does not exist.");
 
@@ -62,9 +56,6 @@ namespace PatientManagement.Repository
         public async Task DeletePatientByIdAsync(int id)
         {
             var patient = await _context.Patients.FindAsync(id);
-
-            if (id <= 0)
-                throw new ArgumentOutOfRangeException("id should be greater than zero");
 
             if (patient == null)
                 throw new KeyNotFoundException($"Patient with Id {id} does not exist.");
@@ -76,9 +67,6 @@ namespace PatientManagement.Repository
         public async Task EditPatientByIdPatchAsync(int id, JsonPatchDocument<Patient> patientModel)
         {
             var patient = await _context.Patients.FindAsync(id);
-
-            if (id <= 0)
-                throw new ArgumentOutOfRangeException("id should be greater than zero");
 
             if (patient == null)
                 throw new KeyNotFoundException($"Patient with Id {id} does not exist.");
@@ -101,9 +89,6 @@ namespace PatientManagement.Repository
         public async Task UpdatePatientByIdAsync(int id, Patient patient)
         {
             var existingPatient = await _context.Patients.FindAsync(id);
-
-            if (id <= 0)
-                throw new ArgumentOutOfRangeException("id should be greater than zero");
 
             if (existingPatient == null)
                 throw new KeyNotFoundException($"Patient with Id {id} does not exist.");
