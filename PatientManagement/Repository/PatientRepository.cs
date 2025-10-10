@@ -30,6 +30,7 @@ namespace PatientManagement.Repository
             if (patient.Weight <= 0 || patient.Weight > 300)
                 throw new InvalidOperationException("Invalid Weight. Weight must be in Kg.gm(65.90) format");
 
+            patient.Email = patient.Email.ToLower();
             patient.CreateDate = today;
             patient.UpdatedDate = today;
 
@@ -46,9 +47,6 @@ namespace PatientManagement.Repository
         public async Task<Patient> GetPatientByIdAsync(int id)
         {
             var patient = await _context.Patients.FindAsync(id);
-
-            if (patient == null)
-                throw new KeyNotFoundException($"Patient with Id {id} does not exist.");
 
             return patient;
         }
@@ -73,6 +71,9 @@ namespace PatientManagement.Repository
 
             var today = DateOnly.FromDateTime(DateTime.Now);
 
+            if (await _context.Patients.AnyAsync(e => e.Email == patient.Email && e.Id != id))
+                throw new InvalidOperationException("Patient with this email already exists");
+
             if (patient.DateOfBirth < today.AddYears(-150) || patient.DateOfBirth > today)
                 throw new InvalidOperationException("Invalid Date of Birth. Age must be between 0 and 150 years.");
 
@@ -95,6 +96,9 @@ namespace PatientManagement.Repository
 
             var today = DateOnly.FromDateTime(DateTime.Now);
 
+            if (await _context.Patients.AnyAsync(e => e.Email == patient.Email && e.Id != id))
+                throw new InvalidOperationException("Patient with this email already exists");
+
             if (patient.DateOfBirth < today.AddYears(-150) || patient.DateOfBirth > today)
                 throw new InvalidOperationException("Invalid Date of Birth. Age must be between 0 and 150 years.");
 
@@ -104,6 +108,7 @@ namespace PatientManagement.Repository
             if (patient.Weight <= 0 || patient.Weight > 300)
                 throw new InvalidOperationException("Invalid Weight. Weight must be in Kg.gm(65.90) format");
 
+            patient.Email = patient.Email.ToLower();
             patient.CreateDate = existingPatient.CreateDate;
             patient.UpdatedDate = DateOnly.FromDateTime(DateTime.Now);
             patient.Id = id;

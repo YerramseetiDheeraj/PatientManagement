@@ -27,7 +27,7 @@ namespace PatientManagement.Controllers
             try
             {
                 var id = await _patientRepository.AddPatientAsync(patient);
-                return Ok("Patient added successfully");
+                return Ok($"Patient with Id {id} added successfully");
             }
             catch (InvalidOperationException ex)
             {
@@ -40,7 +40,7 @@ namespace PatientManagement.Controllers
         {
             var patients = await _patientRepository.GetAllPatientsAsync();
 
-            if(patients == null)
+            if (patients == null)
             {
                 return NotFound();
             }
@@ -56,15 +56,14 @@ namespace PatientManagement.Controllers
                 return BadRequest("Id should be greater than zero");
             }
 
-            try
+            var patient = await _patientRepository.GetPatientByIdAsync(id);
+
+            if (patient == null)
             {
-                var patient = await _patientRepository.GetPatientByIdAsync(id);
-                return Ok(patient);
+                return NotFound($"Employee with Id {id} not found");
             }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
+
+            return Ok(patient);
         }
 
         [HttpDelete("{id}")]
@@ -95,7 +94,7 @@ namespace PatientManagement.Controllers
                 return BadRequest("Id should be greater than zero");
             }
 
-            if(patientModel == null)
+            if (patientModel == null)
             {
                 return BadRequest("Patient cannot be null");
             }
