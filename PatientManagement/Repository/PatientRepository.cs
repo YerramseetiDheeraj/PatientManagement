@@ -87,6 +87,7 @@ namespace PatientManagement.Repository
                 throw new InvalidOperationException("Invalid Weight. Weight must be in Kg.gm(65.90) format");
 
             existingPatient.UpdatedDate = DateOnly.FromDateTime(DateTime.Now);
+            patientModel.Email = existingPatient.Email.ToLower();
 
             await _context.SaveChangesAsync();
         }
