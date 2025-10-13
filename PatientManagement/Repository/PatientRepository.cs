@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.JsonPatch;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.EntityFrameworkCore;
 using PatientManagement.Data;
 using PatientManagement.Models;
@@ -8,35 +9,40 @@ namespace PatientManagement.Repository
     public class PatientRepository : IPatientRepository
     {
         private readonly PatientContext _context;
+        private readonly IMapper _mapper;
 
-        public PatientRepository(PatientContext context)
+        public PatientRepository(PatientContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
-        public async Task<int> AddPatientAsync(Patient patient)
+        public async Task AddPatientAsync(PatientModel patientModel)
         {
-            if (await _context.Patients.AnyAsync(e => e.Email == patient.Email))
-                throw new InvalidOperationException("Patient with this email already exists");
+            var patient = _mapper.Map<Patient>(patientModel);
 
             var today = DateOnly.FromDateTime(DateTime.Now);
 
-            if (patient.DateOfBirth < today.AddYears(-150) || patient.DateOfBirth > today)
+            if (patientModel.DateOfBirth < today.AddYears(-150) || patientModel.DateOfBirth > today)
                 throw new InvalidOperationException("Invalid Date of Birth. Age must be between 0 and 150 years.");
 
-            if (patient.Height <= 0 || patient.Height > 10)
+            if (patientModel.Height <= 0 || patientModel.Height > 10)
                 throw new InvalidOperationException("Invalid height. Height must be in ft.inch(5.7) format");
 
-            if (patient.Weight <= 0 || patient.Weight > 300)
+            if (patientModel.Weight <= 0 || patientModel.Weight > 300)
                 throw new InvalidOperationException("Invalid Weight. Weight must be in Kg.gm(65.90) format");
 
-            patient.Email = patient.Email.ToLower();
+            patient.Email = patientModel.Email.ToLower();
             patient.CreateDate = today;
             patient.UpdatedDate = today;
 
             _context.Patients.Add(patient);
             await _context.SaveChangesAsync();
-            return patient.Id;
+        }
+
+        public async Task<bool> IsPatientEmailExistAsync(PatientModel patientModel)
+        {
+            return await _context.Patients.AnyAsync(e => e.Email == patientModel.Email);
         }
 
         public async Task<List<Patient>> GetAllPatientsAsync()
@@ -53,51 +59,45 @@ namespace PatientManagement.Repository
 
         public async Task DeletePatientByIdAsync(int id)
         {
-            var patient = await _context.Patients.FindAsync(id);
-
-            if (patient == null)
-                throw new KeyNotFoundException($"Patient with Id {id} does not exist.");
+            var patient = await GetPatientByIdAsync(id);
 
             _context.Patients.Remove(patient);
             await _context.SaveChangesAsync();
         }
 
-        public async Task EditPatientByIdPatchAsync(int id, JsonPatchDocument<Patient> patientModel)
+        public async Task EditPatientByIdPatchAsync(int id, JsonPatchDocument<PatientModel> patientPatch)
         {
-            var patient = await _context.Patients.FindAsync(id);
+            var existingPatient = await GetPatientByIdAsync(id);
 
-            if (patient == null)
-                throw new KeyNotFoundException($"Patient with Id {id} does not exist.");
+            var patientModel = _mapper.Map<PatientModel>(existingPatient);
+
+            patientPatch.ApplyTo(patientModel);
+
+            _mapper.Map(patientModel, existingPatient);
 
             var today = DateOnly.FromDateTime(DateTime.Now);
 
-            if (await _context.Patients.AnyAsync(e => e.Email == patient.Email && e.Id != id))
-                throw new InvalidOperationException("Patient with this email already exists");
-
-            if (patient.DateOfBirth < today.AddYears(-150) || patient.DateOfBirth > today)
+            if (existingPatient.DateOfBirth < today.AddYears(-150) || existingPatient.DateOfBirth > today)
                 throw new InvalidOperationException("Invalid Date of Birth. Age must be between 0 and 150 years.");
 
-            if (patient.Height <= 0 || patient.Height > 10)
+            if (existingPatient.Height <= 0 || existingPatient.Height > 10)
                 throw new InvalidOperationException("Invalid height. Height must be in ft.inch(5.7) format");
 
-            if (patient.Weight <= 0 || patient.Weight > 300)
+            if (existingPatient.Weight <= 0 || existingPatient.Weight > 300)
                 throw new InvalidOperationException("Invalid Weight. Weight must be in Kg.gm(65.90) format");
 
-            patientModel.ApplyTo(patient);
+            existingPatient.UpdatedDate = DateOnly.FromDateTime(DateTime.Now);
+
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdatePatientByIdAsync(int id, Patient patient)
+        public async Task UpdatePatientByIdAsync(int id, PatientModel patientModel)
         {
-            var existingPatient = await _context.Patients.FindAsync(id);
+            var existingPatient = await GetPatientByIdAsync(id);
 
-            if (existingPatient == null)
-                throw new KeyNotFoundException($"Patient with Id {id} does not exist.");
+            var patient = _mapper.Map(patientModel, existingPatient);
 
             var today = DateOnly.FromDateTime(DateTime.Now);
-
-            if (await _context.Patients.AnyAsync(e => e.Email == patient.Email && e.Id != id))
-                throw new InvalidOperationException("Patient with this email already exists");
 
             if (patient.DateOfBirth < today.AddYears(-150) || patient.DateOfBirth > today)
                 throw new InvalidOperationException("Invalid Date of Birth. Age must be between 0 and 150 years.");
@@ -111,9 +111,7 @@ namespace PatientManagement.Repository
             patient.Email = patient.Email.ToLower();
             patient.CreateDate = existingPatient.CreateDate;
             patient.UpdatedDate = DateOnly.FromDateTime(DateTime.Now);
-            patient.Id = id;
 
-            _context.Entry(existingPatient).CurrentValues.SetValues(patient);
             await _context.SaveChangesAsync();
         }
     }

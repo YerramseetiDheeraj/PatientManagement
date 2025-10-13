@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PatientManagement.Models
+namespace PatientManagement.Data
 {
     public class Patient
     {

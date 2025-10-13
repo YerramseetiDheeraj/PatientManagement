@@ -1,5 +1,4 @@
-﻿using PatientManagement.Models;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace PatientManagement.Data
 {

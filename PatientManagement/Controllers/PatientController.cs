@@ -17,17 +17,24 @@ namespace PatientManagement.Controllers
         }
 
         [HttpPost("")]
-        public async Task<IActionResult> AddPatientAsync(Patient patient)
+        public async Task<IActionResult> AddPatientAsync(PatientModel patientModel)
         {
-            if (patient == null)
+            if (!ModelState.IsValid)
             {
-                return BadRequest("Patient cannot be null");
+                return BadRequest(ModelState);
+            }
+
+            bool emailExist = await _patientRepository.IsPatientEmailExistAsync(patientModel);
+
+            if (emailExist)
+            {
+                return Conflict("Email already Exists");
             }
 
             try
             {
-                var id = await _patientRepository.AddPatientAsync(patient);
-                return Ok($"Patient with Id {id} added successfully");
+                await _patientRepository.AddPatientAsync(patientModel);
+                return Ok($"Patient added successfully");
             }
             catch (InvalidOperationException ex)
             {
@@ -60,7 +67,7 @@ namespace PatientManagement.Controllers
 
             if (patient == null)
             {
-                return NotFound($"Employee with Id {id} not found");
+                return NotFound($"Patient with Id {id} not found");
             }
 
             return Ok(patient);
@@ -74,39 +81,42 @@ namespace PatientManagement.Controllers
                 return BadRequest("Id should be greater than zero");
             }
 
-            try
+            var patient = await _patientRepository.GetPatientByIdAsync(id);
+
+            if (patient == null)
             {
-                await _patientRepository.DeletePatientByIdAsync(id);
-                return Ok($"Patient with Id {id} deleted successfully.");
+                return NotFound($"Patient with Id {id} not found");
             }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
+
+            await _patientRepository.DeletePatientByIdAsync(id);
+            return Ok($"Patient with Id {id} deleted successfully.");
+
         }
 
         [HttpPatch("{id}")]
-        public async Task<IActionResult> EditPatientByIdAsync([FromBody] JsonPatchDocument<Patient> patientModel, [FromRoute] int id)
+        public async Task<IActionResult> EditPatientByIdAsync([FromBody] JsonPatchDocument<PatientModel> patientModel, [FromRoute] int id)
         {
-
             if (id <= 0)
             {
                 return BadRequest("Id should be greater than zero");
             }
 
-            if (patientModel == null)
+            if (!ModelState.IsValid)
             {
-                return BadRequest("Patient cannot be null");
+                return BadRequest(ModelState);
+            }
+
+            var patient = await _patientRepository.GetPatientByIdAsync(id);
+
+            if (patient == null)
+            {
+                return NotFound($"Patient with Id {id} not found");
             }
 
             try
             {
                 await _patientRepository.EditPatientByIdPatchAsync(id, patientModel);
                 return Ok($"Patient with Id {id} edited successfully.");
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
             }
             catch (InvalidOperationException ex)
             {
@@ -115,7 +125,7 @@ namespace PatientManagement.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdatePatientAllDetailsByIdAsync([FromRoute] int id, [FromBody] Patient patient)
+        public async Task<IActionResult> UpdatePatientAllDetailsByIdAsync([FromRoute] int id, [FromBody] PatientModel patientModel)
         {
 
             if (id <= 0)
@@ -123,19 +133,32 @@ namespace PatientManagement.Controllers
                 return BadRequest("Id should be greater than zero");
             }
 
-            if (patient == null)
+            if (!ModelState.IsValid)
             {
-                return BadRequest("Patient cannot be null");
+                return BadRequest(ModelState);
+            }
+
+            var existingPatient = await _patientRepository.GetPatientByIdAsync(id);
+
+            if (existingPatient == null)
+            {
+                return NotFound($"Patient with Id {id} not found");
+            }
+
+            if (existingPatient.Email != patientModel.Email)
+            {
+                bool emailExists = await _patientRepository.IsPatientEmailExistAsync(patientModel);
+
+                if (emailExists)
+                {
+                    return Conflict("Email already Exists");
+                }
             }
 
             try
             {
-                await _patientRepository.UpdatePatientByIdAsync(id, patient);
+                await _patientRepository.UpdatePatientByIdAsync(id, patientModel);
                 return Ok($"Patient with Id {id} updated successfully.");
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
             }
             catch (InvalidOperationException ex)
             {
