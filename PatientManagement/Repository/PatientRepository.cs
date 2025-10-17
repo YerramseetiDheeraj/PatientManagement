@@ -17,32 +17,30 @@ namespace PatientManagement.Repository
             _mapper = mapper;
         }
 
-        public async Task AddPatientAsync(PatientModel patientModel)
+        public async Task AddPatientAsync(PatientCreateModel patientCreateModel)
         {
-            var patient = _mapper.Map<Patient>(patientModel);
+            var patient = _mapper.Map<Patient>(patientCreateModel);
 
             var today = DateOnly.FromDateTime(DateTime.Now);
 
-            if (patientModel.DateOfBirth < today.AddYears(-150) || patientModel.DateOfBirth > today)
+            if (patientCreateModel.DateOfBirth < today.AddYears(-150) || patientCreateModel.DateOfBirth > today)
                 throw new InvalidOperationException("Invalid Date of Birth. Age must be between 0 and 150 years.");
 
-            if (patientModel.Height <= 0 || patientModel.Height > 10)
+            if (patientCreateModel.Height <= 0 || patientCreateModel.Height > 10)
                 throw new InvalidOperationException("Invalid height. Height must be in ft.inch(5.7) format");
 
-            if (patientModel.Weight <= 0 || patientModel.Weight > 300)
+            if (patientCreateModel.Weight <= 0 || patientCreateModel.Weight > 300)
                 throw new InvalidOperationException("Invalid Weight. Weight must be in Kg.gm(65.90) format");
 
-            patient.Email = patientModel.Email.ToLower();
-            patient.CreateDate = today;
-            patient.UpdatedDate = today;
+            patient.Email = patientCreateModel.Email.ToLower();
 
             _context.Patients.Add(patient);
             await _context.SaveChangesAsync();
         }
 
-        public async Task<bool> IsPatientEmailExistAsync(PatientModel patientModel)
+        public async Task<bool> IsPatientEmailExistAsync(string email)
         {
-            return await _context.Patients.AnyAsync(e => e.Email == patientModel.Email);
+            return await _context.Patients.AnyAsync(e => e.Email == email);
         }
 
         public async Task<List<Patient>> GetAllPatientsAsync()
@@ -65,11 +63,12 @@ namespace PatientManagement.Repository
             await _context.SaveChangesAsync();
         }
 
-        public async Task EditPatientByIdPatchAsync(int id, JsonPatchDocument<PatientModel> patientPatch)
+        public async Task EditPatientByIdPatchAsync(int id, JsonPatchDocument<PatientUpdateModel> patientPatch)
         {
+
             var existingPatient = await GetPatientByIdAsync(id);
 
-            var patientModel = _mapper.Map<PatientModel>(existingPatient);
+            var patientModel = _mapper.Map<PatientUpdateModel>(existingPatient);
 
             patientPatch.ApplyTo(patientModel);
 
@@ -86,32 +85,29 @@ namespace PatientManagement.Repository
             if (existingPatient.Weight <= 0 || existingPatient.Weight > 300)
                 throw new InvalidOperationException("Invalid Weight. Weight must be in Kg.gm(65.90) format");
 
-            existingPatient.UpdatedDate = DateOnly.FromDateTime(DateTime.Now);
-            patientModel.Email = existingPatient.Email.ToLower();
+            existingPatient.Email = existingPatient.Email.ToLower();
 
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdatePatientByIdAsync(int id, PatientModel patientModel)
+        public async Task UpdatePatientByIdAsync(int id, PatientUpdateModel patientUpdateModel)
         {
             var existingPatient = await GetPatientByIdAsync(id);
 
-            var patient = _mapper.Map(patientModel, existingPatient);
+            _mapper.Map(patientUpdateModel, existingPatient);
 
             var today = DateOnly.FromDateTime(DateTime.Now);
 
-            if (patient.DateOfBirth < today.AddYears(-150) || patient.DateOfBirth > today)
+            if (existingPatient.DateOfBirth < today.AddYears(-150) || existingPatient.DateOfBirth > today)
                 throw new InvalidOperationException("Invalid Date of Birth. Age must be between 0 and 150 years.");
 
-            if (patient.Height <= 0 || patient.Height > 10)
+            if (existingPatient.Height <= 0 || existingPatient.Height > 10)
                 throw new InvalidOperationException("Invalid height. Height must be in ft.inch(5.7) format");
 
-            if (patient.Weight <= 0 || patient.Weight > 300)
+            if (existingPatient.Weight <= 0 || existingPatient.Weight > 300)
                 throw new InvalidOperationException("Invalid Weight. Weight must be in Kg.gm(65.90) format");
 
-            patient.Email = patient.Email.ToLower();
-            patient.CreateDate = existingPatient.CreateDate;
-            patient.UpdatedDate = DateOnly.FromDateTime(DateTime.Now);
+            existingPatient.Email = existingPatient.Email.ToLower();
 
             await _context.SaveChangesAsync();
         }

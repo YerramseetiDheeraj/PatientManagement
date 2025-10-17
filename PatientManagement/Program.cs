@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using PatientManagement.Data;
 using PatientManagement.Mapping;
@@ -34,6 +35,11 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddAutoMapper(typeof(PatientProfile).Assembly);
+
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.SuppressModelStateInvalidFilter = true;
+});
 
 var app = builder.Build();
 

@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PatientManagement.Models
 {
-    public class PatientModel
+    public class PatientCreateModel
     {
 
         [Required(ErrorMessage = "First Name is required")]

@@ -6,9 +6,9 @@ namespace PatientManagement.Repository
 {
     public interface IPatientRepository
     {
-        Task AddPatientAsync(PatientModel patientModel);
+        Task AddPatientAsync(PatientCreateModel patientCreateModel);
 
-        Task<bool> IsPatientEmailExistAsync(PatientModel patientModel);
+        Task<bool> IsPatientEmailExistAsync(string email);
 
         Task<List<Patient>> GetAllPatientsAsync();
 
@@ -16,8 +16,8 @@ namespace PatientManagement.Repository
 
         Task DeletePatientByIdAsync(int id);
 
-        Task EditPatientByIdPatchAsync(int id, JsonPatchDocument<PatientModel> patientModel);
+        Task EditPatientByIdPatchAsync(int id, JsonPatchDocument<PatientUpdateModel> patientUpdateModel);
 
-        Task UpdatePatientByIdAsync(int id, PatientModel patientModel);
+        Task UpdatePatientByIdAsync(int id, PatientUpdateModel patientUpdateModel);
     }
 }
