@@ -1,8 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using PatientManagement.Models;
 
 namespace PatientManagement.Data
 {
-    public class PatientContext:DbContext
+    public class PatientContext : IdentityDbContext<ApplicationAdmin>
     {
         public PatientContext(DbContextOptions<PatientContext> options) : base(options) { }
 

@@ -10,7 +10,7 @@ namespace PatientManagement.Repository
 
         Task<bool> IsPatientEmailExistAsync(string email);
 
-        Task<List<Patient>> GetAllPatientsAsync();
+        Task<List<Patient>> GetAllPatientsAsync(string? term, string? sort, int page, int limit);
 
         Task<Patient> GetPatientByIdAsync(int id);
 

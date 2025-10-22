@@ -1,5 +1,10 @@
-﻿using Microsoft.AspNetCore.JsonPatch;
+﻿using LazyCache;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
+using PatientManagement.Caching;
+using PatientManagement.Data;
 using PatientManagement.Models;
 using PatientManagement.Repository;
 
@@ -7,13 +12,16 @@ namespace PatientManagement.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class PatientController : Controller
     {
         private readonly IPatientRepository _patientRepository;
+        private readonly ICacheProvider _cacheProvider;
 
-        public PatientController(IPatientRepository patientRepository)
+        public PatientController(IPatientRepository patientRepository,ICacheProvider cacheProvider)
         {
             _patientRepository = patientRepository;
+            _cacheProvider = cacheProvider;
         }
 
         [HttpPost("")]
@@ -43,9 +51,21 @@ namespace PatientManagement.Controllers
         }
 
         [HttpGet("")]
-        public async Task<IActionResult> GetAllPatientsAsync()
+        public async Task<IActionResult> GetAllPatientsAsync(string? term, string? sort, int page=1, int limit=10)
         {
-            var patients = await _patientRepository.GetAllPatientsAsync();
+            string cacheKeys = $"{CacheKeys.Patient}_{term}_{sort}_{page}_{limit}";
+
+            if(!_cacheProvider.TryGetValue(cacheKeys,out List<Patient> patients))
+            {
+                patients = await _patientRepository.GetAllPatientsAsync(term, sort, page, limit);
+
+                var cacheEntryOptions = new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpiration = DateTime.Now.AddSeconds(10),
+                    SlidingExpiration = TimeSpan.FromSeconds(10)
+                };
+                _cacheProvider.Set(cacheKeys, patients,cacheEntryOptions);
+            }
 
             if (patients == null)
             {
@@ -63,14 +83,24 @@ namespace PatientManagement.Controllers
                 return BadRequest("Id should be greater than zero");
             }
 
-            var patient = await _patientRepository.GetPatientByIdAsync(id);
+            if(!_cacheProvider.TryGetValue(CacheKeys.Patient,out Patient patients))
+            {
+                patients = await _patientRepository.GetPatientByIdAsync(id);
 
-            if (patient == null)
+                var cacheEntryOptions = new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpiration = DateTime.Now.AddSeconds(10),
+                    SlidingExpiration = TimeSpan.FromSeconds(10)
+                };
+                _cacheProvider.Set(CacheKeys.Patient, patients, cacheEntryOptions);
+            }
+
+            if (patients == null)
             {
                 return NotFound($"Patient with Id {id} not found");
             }
 
-            return Ok(patient);
+            return Ok(patients);
         }
 
         [HttpDelete("{id}")]

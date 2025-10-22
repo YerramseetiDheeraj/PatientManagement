@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.EntityFrameworkCore;
 using PatientManagement.Data;
 using PatientManagement.Models;
+using System.Reflection;
+using System.Text;
+using System.Linq.Dynamic.Core;
 
 namespace PatientManagement.Repository
 {
@@ -43,9 +46,71 @@ namespace PatientManagement.Repository
             return await _context.Patients.AnyAsync(e => e.Email == email);
         }
 
-        public async Task<List<Patient>> GetAllPatientsAsync()
+        public async Task<List<Patient>> GetAllPatientsAsync(string ?term,string ?sort,int page,int limit)
         {
-            return await _context.Patients.ToListAsync();
+            IQueryable<Patient> patients;
+
+            //searching
+            if (string.IsNullOrEmpty(term))
+            {
+                patients = _context.Patients;
+            }
+            else
+            {
+                term = term.Trim().ToLower();
+
+                patients = _context.Patients.Where(p => p.FirstName.ToLower().Contains(term)||
+                p.LastName.ToLower().Contains(term)||
+                p.Address.ToLower().Contains(term)||
+                p.Gender.ToLower().Contains(term)||
+                p.MedicalComments.ToLower().Contains(term)||
+                p.Email.ToLower().Contains(term)||
+                p.ContactNumber.ToLower().Contains(term));
+            }
+
+            //sorting
+            if (!string.IsNullOrWhiteSpace(sort))
+            {
+                var sortFields = sort.Split(',');
+                StringBuilder orderQueryBuilder = new StringBuilder();
+                PropertyInfo[] propertyInfo = typeof(Patient).GetProperties();
+
+                foreach (var field in sortFields)
+                {
+                    string sortOrder = "ascending";
+                    var sortField = field.Trim();
+
+                    if (sortField.StartsWith("-"))
+                    {
+                        sortField = sortField.TrimStart('-');
+                        sortOrder = "descending";
+                    }
+
+                    var property = propertyInfo.FirstOrDefault(x => x.Name.Equals(sortField, StringComparison.OrdinalIgnoreCase));
+
+                    if (property == null)
+                        continue;
+
+                    orderQueryBuilder.Append($"{property.Name.ToString()}{sortOrder},");
+                }
+
+                string orderQuery = orderQueryBuilder.ToString().TrimEnd(',', ' ');
+
+                if (!string.IsNullOrWhiteSpace(orderQuery))
+                {
+                    patients = patients.OrderBy(orderQuery);
+                }
+                else
+                {
+                    patients = patients.OrderBy(a => a.Id);
+                }
+            }
+
+            //applying pagination
+            var totalCount = await _context.Patients.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalCount / (double)limit);
+            var paged = await patients.Skip((page - 1) * limit).Take(limit).ToListAsync();
+            return paged;
         }
 
         public async Task<Patient> GetPatientByIdAsync(int id)
