@@ -1,11 +1,13 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using PatientManagement.Caching;
 using PatientManagement.Data;
 using PatientManagement.Models;
+using System.Linq.Dynamic.Core;
 using System.Reflection;
 using System.Text;
-using System.Linq.Dynamic.Core;
 
 namespace PatientManagement.Repository
 {
@@ -13,11 +15,13 @@ namespace PatientManagement.Repository
     {
         private readonly PatientContext _context;
         private readonly IMapper _mapper;
+        private readonly IMemoryCache _cacheProvider;
 
-        public PatientRepository(PatientContext context, IMapper mapper)
+        public PatientRepository(PatientContext context, IMapper mapper, IMemoryCache memoryCache)
         {
             _context = context;
             _mapper = mapper;
+            _cacheProvider = memoryCache;
         }
 
         public async Task AddPatientAsync(PatientCreateModel patientCreateModel)
@@ -46,78 +50,111 @@ namespace PatientManagement.Repository
             return await _context.Patients.AnyAsync(e => e.Email == email);
         }
 
-        public async Task<List<Patient>> GetAllPatientsAsync(string ?term,string ?sort,int page,int limit)
+        public async Task<List<Patient>> GetAllPatientsAsync(string? term, string? sort, int page, int limit)
         {
-            IQueryable<Patient> patients;
+            string cacheKeys = $"{CacheKeys.Patient}_{term}_{sort}_{page}_{limit}";
 
-            //searching
-            if (string.IsNullOrEmpty(term))
+            if (!_cacheProvider.TryGetValue(cacheKeys, out List<Patient> patients))
             {
-                patients = _context.Patients;
-            }
-            else
-            {
-                term = term.Trim().ToLower();
+                IQueryable<Patient> query;
 
-                patients = _context.Patients.Where(p => p.FirstName.ToLower().Contains(term)||
-                p.LastName.ToLower().Contains(term)||
-                p.Address.ToLower().Contains(term)||
-                p.Gender.ToLower().Contains(term)||
-                p.MedicalComments.ToLower().Contains(term)||
-                p.Email.ToLower().Contains(term)||
-                p.ContactNumber.ToLower().Contains(term));
-            }
-
-            //sorting
-            if (!string.IsNullOrWhiteSpace(sort))
-            {
-                var sortFields = sort.Split(',');
-                StringBuilder orderQueryBuilder = new StringBuilder();
-                PropertyInfo[] propertyInfo = typeof(Patient).GetProperties();
-
-                foreach (var field in sortFields)
+                //searching
+                if (string.IsNullOrEmpty(term))
                 {
-                    string sortOrder = "ascending";
-                    var sortField = field.Trim();
-
-                    if (sortField.StartsWith("-"))
-                    {
-                        sortField = sortField.TrimStart('-');
-                        sortOrder = "descending";
-                    }
-
-                    var property = propertyInfo.FirstOrDefault(x => x.Name.Equals(sortField, StringComparison.OrdinalIgnoreCase));
-
-                    if (property == null)
-                        continue;
-
-                    orderQueryBuilder.Append($"{property.Name.ToString()}{sortOrder},");
-                }
-
-                string orderQuery = orderQueryBuilder.ToString().TrimEnd(',', ' ');
-
-                if (!string.IsNullOrWhiteSpace(orderQuery))
-                {
-                    patients = patients.OrderBy(orderQuery);
+                    query = _context.Patients;
                 }
                 else
                 {
-                    patients = patients.OrderBy(a => a.Id);
+                    term = term.Trim().ToLower();
+
+                    query = _context.Patients.Where(p => p.FirstName.ToLower().Contains(term) ||
+                    p.LastName.ToLower().Contains(term) ||
+                    p.Address.ToLower().Contains(term) ||
+                    p.Gender.ToLower().Contains(term) ||
+                    p.MedicalComments.ToLower().Contains(term) ||
+                    p.Email.ToLower().Contains(term) ||
+                    p.ContactNumber.ToLower().Contains(term));
                 }
+
+                //sorting
+                if (!string.IsNullOrWhiteSpace(sort))
+                {
+                    var sortFields = sort.Split(',');
+                    StringBuilder orderQueryBuilder = new StringBuilder();
+                    PropertyInfo[] propertyInfo = typeof(Patient).GetProperties();
+
+                    foreach (var field in sortFields)
+                    {
+                        string sortOrder = "ascending";
+                        var sortField = field.Trim();
+
+                        if (sortField.StartsWith("-"))
+                        {
+                            sortField = sortField.TrimStart('-');
+                            sortOrder = "descending";
+                        }
+
+                        var property = propertyInfo.FirstOrDefault(x => x.Name.Equals(sortField, StringComparison.OrdinalIgnoreCase));
+
+                        if (property == null)
+                            continue;
+
+                        orderQueryBuilder.Append($"{property.Name.ToString()}{sortOrder},");
+                    }
+
+                    string orderQuery = orderQueryBuilder.ToString().TrimEnd(',', ' ');
+
+                    if (!string.IsNullOrWhiteSpace(orderQuery))
+                    {
+                        query = query.OrderBy(orderQuery);
+                    }
+                    else
+                    {
+                        query = query.OrderBy(a => a.Id);
+                    }
+                }
+
+                //applying pagination
+                var totalCount = await _context.Patients.CountAsync();
+                var totalPages = (int)Math.Ceiling(totalCount / (double)limit);
+                patients = await query.Skip((page - 1) * limit).Take(limit).ToListAsync();
+
+                if (patients != null)
+                {
+                    var cacheEntryOptions = new MemoryCacheEntryOptions
+                    {
+                        AbsoluteExpiration = DateTime.Now.AddSeconds(10),
+                        SlidingExpiration = TimeSpan.FromSeconds(10)
+                    };
+                    _cacheProvider.Set(cacheKeys, patients, cacheEntryOptions);
+                }
+
             }
 
-            //applying pagination
-            var totalCount = await _context.Patients.CountAsync();
-            var totalPages = (int)Math.Ceiling(totalCount / (double)limit);
-            var paged = await patients.Skip((page - 1) * limit).Take(limit).ToListAsync();
-            return paged;
+            return patients;
         }
 
         public async Task<Patient> GetPatientByIdAsync(int id)
         {
-            var patient = await _context.Patients.FindAsync(id);
+            var cacheKeys = $"{CacheKeys.Patient}_{id}";
 
-            return patient;
+            if (!_cacheProvider.TryGetValue(cacheKeys, out Patient patients))
+            {
+                 patients = await _context.Patients.FindAsync(id);
+
+                if(patients != null)
+                {
+                    var cacheEntryOptions = new MemoryCacheEntryOptions
+                    {
+                        AbsoluteExpiration = DateTime.Now.AddSeconds(10),
+                        SlidingExpiration = TimeSpan.FromSeconds(10)
+                    };
+                    _cacheProvider.Set(cacheKeys, patients, cacheEntryOptions);
+                }
+
+            }
+
+            return patients;
         }
 
         public async Task DeletePatientByIdAsync(int id)

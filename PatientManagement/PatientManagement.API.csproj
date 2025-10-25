@@ -7,25 +7,25 @@
   </PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="AutoMapper" Version="13.0.1" />
+		<PackageReference Include="AutoMapper" Version="12.0.1" />
+		<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
 		<PackageReference Include="LazyCache.AspNetCore" Version="2.4.0" />
-		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.20" />
-
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.21" />
 		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.0" />
-
-		<PackageReference Include="Microsoft.AspNetCore.JsonPatch" Version="9.0.9" />
 		<PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.5" />
-
-		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0">
-			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
-
+		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.10" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
-
 		<PackageReference Include="System.Linq.Dynamic.Core" Version="1.6.9" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\PatientManagement.BusinessLogic\PatientManagement.BusinessLogic.csproj" />
+	  <ProjectReference Include="..\PatientManagement.Models\PatientManagement.Models.csproj" />
 	</ItemGroup>
 
 

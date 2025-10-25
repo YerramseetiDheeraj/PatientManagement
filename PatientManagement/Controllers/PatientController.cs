@@ -18,7 +18,7 @@ namespace PatientManagement.Controllers
         private readonly IPatientRepository _patientRepository;
         private readonly ICacheProvider _cacheProvider;
 
-        public PatientController(IPatientRepository patientRepository,ICacheProvider cacheProvider)
+        public PatientController(IPatientRepository patientRepository, ICacheProvider cacheProvider)
         {
             _patientRepository = patientRepository;
             _cacheProvider = cacheProvider;
@@ -51,21 +51,9 @@ namespace PatientManagement.Controllers
         }
 
         [HttpGet("")]
-        public async Task<IActionResult> GetAllPatientsAsync(string? term, string? sort, int page=1, int limit=10)
+        public async Task<IActionResult> GetAllPatientsAsync(string? term, string? sort, int page = 1, int limit = 10)
         {
-            string cacheKeys = $"{CacheKeys.Patient}_{term}_{sort}_{page}_{limit}";
-
-            if(!_cacheProvider.TryGetValue(cacheKeys,out List<Patient> patients))
-            {
-                patients = await _patientRepository.GetAllPatientsAsync(term, sort, page, limit);
-
-                var cacheEntryOptions = new MemoryCacheEntryOptions
-                {
-                    AbsoluteExpiration = DateTime.Now.AddSeconds(10),
-                    SlidingExpiration = TimeSpan.FromSeconds(10)
-                };
-                _cacheProvider.Set(cacheKeys, patients,cacheEntryOptions);
-            }
+            var patients = await _patientRepository.GetAllPatientsAsync(term, sort, page, limit);
 
             if (patients == null)
             {
@@ -83,17 +71,7 @@ namespace PatientManagement.Controllers
                 return BadRequest("Id should be greater than zero");
             }
 
-            if(!_cacheProvider.TryGetValue(CacheKeys.Patient,out Patient patients))
-            {
-                patients = await _patientRepository.GetPatientByIdAsync(id);
-
-                var cacheEntryOptions = new MemoryCacheEntryOptions
-                {
-                    AbsoluteExpiration = DateTime.Now.AddSeconds(10),
-                    SlidingExpiration = TimeSpan.FromSeconds(10)
-                };
-                _cacheProvider.Set(CacheKeys.Patient, patients, cacheEntryOptions);
-            }
+            var patients = await _patientRepository.GetPatientByIdAsync(id);
 
             if (patients == null)
             {
@@ -131,7 +109,7 @@ namespace PatientManagement.Controllers
                 return BadRequest("Id should be greater than zero");
             }
 
-            if (patientUpdateModel==null)
+            if (patientUpdateModel == null)
             {
                 return BadRequest("patient data cannot be null");
             }
@@ -163,7 +141,7 @@ namespace PatientManagement.Controllers
                 return BadRequest("Id should be greater than zero");
             }
 
-            if(patientUpdateModel == null)
+            if (patientUpdateModel == null)
             {
                 return BadRequest("Patient data cannot be null");
             }

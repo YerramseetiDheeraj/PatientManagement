@@ -30,9 +30,9 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "Employee Management API",
+        Title = "Patient Management API",
         Version = "v1",
-        Description = "API for managing employees with JWT authentication"
+        Description = "API for managing patient with JWT authentication"
     });
 
     //  Add JWT Bearer definition
