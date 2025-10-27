@@ -42,6 +42,7 @@ namespace PatientManagement.Repository
             patient.Email = patientCreateModel.Email.ToLower();
 
             _context.Patients.Add(patient);
+            _cacheProvider.Remove(CacheKeys.Patient);
             await _context.SaveChangesAsync();
         }
 
@@ -123,7 +124,7 @@ namespace PatientManagement.Repository
                 {
                     var cacheEntryOptions = new MemoryCacheEntryOptions
                     {
-                        AbsoluteExpiration = DateTime.Now.AddSeconds(10),
+                        AbsoluteExpiration = DateTime.Now.AddHours(7),
                         SlidingExpiration = TimeSpan.FromSeconds(10)
                     };
                     _cacheProvider.Set(cacheKeys, patients, cacheEntryOptions);
@@ -146,7 +147,7 @@ namespace PatientManagement.Repository
                 {
                     var cacheEntryOptions = new MemoryCacheEntryOptions
                     {
-                        AbsoluteExpiration = DateTime.Now.AddSeconds(10),
+                        AbsoluteExpiration = DateTime.Now.AddHours(7),
                         SlidingExpiration = TimeSpan.FromSeconds(10)
                     };
                     _cacheProvider.Set(cacheKeys, patients, cacheEntryOptions);
@@ -162,6 +163,7 @@ namespace PatientManagement.Repository
             var patient = await GetPatientByIdAsync(id);
 
             _context.Patients.Remove(patient);
+            _cacheProvider.Remove(CacheKeys.Patient);
             await _context.SaveChangesAsync();
         }
 
@@ -188,7 +190,7 @@ namespace PatientManagement.Repository
                 throw new InvalidOperationException("Invalid Weight. Weight must be in Kg.gm(65.90) format");
 
             existingPatient.Email = existingPatient.Email.ToLower();
-
+            _cacheProvider.Remove(CacheKeys.Patient);
             await _context.SaveChangesAsync();
         }
 
@@ -210,7 +212,7 @@ namespace PatientManagement.Repository
                 throw new InvalidOperationException("Invalid Weight. Weight must be in Kg.gm(65.90) format");
 
             existingPatient.Email = existingPatient.Email.ToLower();
-
+            _cacheProvider.Remove(CacheKeys.Patient);
             await _context.SaveChangesAsync();
         }
     }
