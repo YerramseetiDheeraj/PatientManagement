@@ -65,8 +65,6 @@ builder.Services.AddIdentity<ApplicationAdmin, IdentityRole>()
     .AddEntityFrameworkStores<PatientContext>()
     .AddDefaultTokenProviders();
 
-
-
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(builder =>
